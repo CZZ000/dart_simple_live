@@ -42,11 +42,11 @@ jobs:
         run: |
           cd simple_live_app
           if [ "${{ matrix.platform }}" = "android" ]; then
-            flutter build apk --release
+            flutter build apk --release -v
           elif [ "${{ matrix.platform }}" = "windows" ]; then
-            flutter build windows --release
+            flutter build windows --release -v
           elif [ "${{ matrix.platform }}" = "macos" ]; then
-            flutter build macos --release
+            flutter build macos --release -v
           fi
         shell: bash
 
