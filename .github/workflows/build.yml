@@ -1,7 +1,7 @@
 name: Build Apps
 
 on:
-  workflow_dispatch: # 允许手动点击按钮开始构建
+  workflow_dispatch:
 
 jobs:
   build:
@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive # 确保子模块也被拉取
 
       - name: Setup Java (for Android)
         if: matrix.platform == 'android'
@@ -33,20 +35,30 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Install dependencies
+      - name: Install Dependencies & Code Gen
         run: |
-          cd simple_live_app
+          # 1. 先配置核心库
+          cd simple_live_core
           flutter pub get
+          
+          # 2. 再配置主程序
+          cd ../simple_live_app
+          flutter pub get
+          
+          # 3. 运行代码生成器 (重要：该项目使用 Hive 需要这一步)
+          flutter pub run build_runner build --delete-conflicting-outputs
+        shell: bash
 
       - name: Build App
         run: |
           cd simple_live_app
           if [ "${{ matrix.platform }}" = "android" ]; then
-            flutter build apk --release -v
+            # 加上 --no-tree-shake-icons 防止某些图标库导致的编译错误
+            flutter build apk --release --no-tree-shake-icons
           elif [ "${{ matrix.platform }}" = "windows" ]; then
-            flutter build windows --release -v
+            flutter build windows --release
           elif [ "${{ matrix.platform }}" = "macos" ]; then
-            flutter build macos --release -v
+            flutter build macos --release
           fi
         shell: bash
 
