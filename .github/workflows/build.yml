@@ -1,0 +1,60 @@
+name: Build Apps
+
+on:
+  workflow_dispatch: # 允许手动点击按钮开始构建
+
+jobs:
+  build:
+    name: Build for ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - platform: android
+            os: ubuntu-latest
+          - platform: windows
+            os: windows-latest
+          - platform: macos
+            os: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java (for Android)
+        if: matrix.platform == 'android'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: |
+          cd simple_live_app
+          flutter pub get
+
+      - name: Build App
+        run: |
+          cd simple_live_app
+          if [ "${{ matrix.platform }}" = "android" ]; then
+            flutter build apk --release
+          elif [ "${{ matrix.platform }}" = "windows" ]; then
+            flutter build windows --release
+          elif [ "${{ matrix.platform }}" = "macos" ]; then
+            flutter build macos --release
+          fi
+        shell: bash
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}-release
+          path: |
+            simple_live_app/build/app/outputs/flutter-apk/app-release.apk
+            simple_live_app/build/windows/runner/Release/
+            simple_live_app/build/macos/Build/Products/Release/
