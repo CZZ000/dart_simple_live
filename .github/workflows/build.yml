@@ -34,6 +34,9 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+      - name: Clean Gradle cache
+        if: matrix.platform == 'android'
+        run: rm -rf ~/.gradle/wrapper ~/.gradle/caches    
 
       - name: Install Dependencies & Code Gen
         run: |
