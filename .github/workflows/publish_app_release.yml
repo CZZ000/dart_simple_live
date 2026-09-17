@@ -23,17 +23,32 @@ jobs:
           cache: "gradle"
 
       #设置Flutter
-      - name: Flutter action
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.38.x"
+          flutter-version: "3.27.4"
           cache: true
+
+      #检查Flutter版本
+      - name: Check Flutter version
+        run: |
+          flutter --version
+          flutter doctor -v
 
       #更新Flutter的packages
       - name: Restore packages
         run: |
           cd simple_live_app
           flutter pub get
+        continue-on-error: false
+
+      #打印网络检测
+      - name: Check network
+        run: |
+          echo "Testing pub.dev connectivity..."
+          curl -s --max-time 10 https://pub.dev | head -c 200
+          echo ""
+          echo "Flutter channel: $(flutter channel)"
 
       #APK签名设置（可选，如果设置了secrets则使用签名）
       - name: Check Android keystore
@@ -101,7 +116,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.38.x"
+          flutter-version: "3.27.4"
           cache: true
       # 安装依赖
       - name: Update apt-get
@@ -155,7 +170,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.38.x"
+          flutter-version: "3.27.4"
           cache: true
       # 打开Windows Desktop支持
       - name: Enable Flutter Desktop
@@ -210,7 +225,7 @@ jobs:
       - name: Flutter action
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.38.x"
+          flutter-version: "3.27.4"
           cache: true
 
       #设置JAVA环境
