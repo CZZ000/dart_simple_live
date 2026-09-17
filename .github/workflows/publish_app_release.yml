@@ -39,7 +39,7 @@ jobs:
       - name: Restore packages
         run: |
           cd simple_live_app
-          flutter pub get
+          flutter pub get --verbose 2>&1 | tail -50
         continue-on-error: false
 
       #打印网络检测
@@ -130,7 +130,7 @@ jobs:
       - name: Restore Packages
         run: |
           cd simple_live_app
-          flutter pub get
+          flutter pub get --verbose 2>&1 | tail -50
       # 设置flutter_distributor环境
       - name: Install flutter_distributor
         run: dart pub global activate flutter_distributor
@@ -179,7 +179,7 @@ jobs:
       - name: Restore Packages
         run: |
           cd simple_live_app
-          flutter pub get
+          flutter pub get --verbose 2>&1 | tail -50
       # 构建Windows应用
       - name: Build Windows
         run: |
@@ -243,7 +243,7 @@ jobs:
       - name: Restore packages
         run: |
           cd simple_live_app
-          flutter pub get
+          flutter pub get --verbose 2>&1 | tail -50
 
       # 安装appdmg npm install -g appdmg
       - name: Install appdmg
