@@ -26,7 +26,7 @@ jobs:
       - name: Flutter action
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.38.x"
+          flutter-version: "3.27.x"
           cache: true
 
       #更新Flutter的packages
@@ -101,7 +101,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.38.x"
+          flutter-version: "3.27.x"
           cache: true
       # 安装依赖
       - name: Update apt-get
@@ -155,30 +155,35 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.38.x"
+          flutter-version: "3.27.x"
           cache: true
+      # 打开Windows Desktop支持
       - name: Enable Flutter Desktop
         run: flutter config --enable-windows-desktop
+      # 更新Flutter的packages
       - name: Restore Packages
         run: |
           cd simple_live_app
           flutter pub get
-      # 设置flutter_distributor环境
-      - name: Install flutter_distributor
-        run: dart pub global activate flutter_distributor
-      # build Windows ZIP
+      # 构建Windows应用
       - name: Build Windows
         run: |
           cd simple_live_app
-          flutter_distributor package --platform windows --targets zip --skip-clean
-
+          flutter build windows --release
+      # 打包为ZIP
+      - name: Package Windows
+        run: |
+          cd simple_live_app
+          $OutputPath = "build\windows\x64\runner\Release"
+          $ZipPath = "build\dist\simple_live_app-windows.zip"
+          if (!(Test-Path "build\dist")) { New-Item -ItemType Directory -Path "build\dist" -Force }
+          Compress-Archive -Path "$OutputPath\*" -DestinationPath $ZipPath -Force
       # 上传Windows至Artifacts
       - name: Upload Windows APP to Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows
-          path: |
-            simple_live_app/build/dist/*/*.zip
+          path: simple_live_app/build/dist/simple_live_app-windows.zip
 
       #获取版本信息
       - name: Get version from tag
@@ -205,7 +210,7 @@ jobs:
       - name: Flutter action
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.38.x"
+          flutter-version: "3.27.x"
           cache: true
 
       #设置JAVA环境
