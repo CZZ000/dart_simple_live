@@ -20,7 +20,6 @@ jobs:
         with:
           distribution: "zulu"
           java-version: "17"
-          cache: "gradle"
 
       #设置Flutter
       - name: Setup Flutter
@@ -29,26 +28,21 @@ jobs:
           flutter-version: "3.38.x"
           cache: true
 
-      #检查Flutter版本
-      - name: Check Flutter version
-        run: |
-          flutter --version
-          flutter doctor -v
-
       #更新Flutter的packages
       - name: Restore packages
         run: |
           cd simple_live_app
-          flutter pub get --verbose 2>&1 | tail -50
-        continue-on-error: false
+          flutter pub get
 
-      #打印网络检测
-      - name: Check network
+      #检查Gradle版本
+      - name: Check Gradle
         run: |
-          echo "Testing pub.dev connectivity..."
-          curl -s --max-time 10 https://pub.dev | head -c 200
+          echo "Gradle wrapper properties:"
+          cat simple_live_app/android/gradle/wrapper/gradle-wrapper.properties
           echo ""
-          echo "Flutter channel: $(flutter channel)"
+          echo "Flutter Android info:"
+          flutter config --list
+          flutter doctor --android-licenses 2>/dev/null || true
 
       #APK签名设置（可选，如果设置了secrets则使用签名）
       - name: Check Android keystore
@@ -81,7 +75,7 @@ jobs:
       - name: Build APK
         run: |
           cd simple_live_app
-          flutter build apk --release --split-per-abi --verbose 2>&1 | tail -100
+          flutter build apk --release --split-per-abi
 
       #上传APK至Artifacts
       - name: Upload APK to Artifacts
@@ -130,7 +124,7 @@ jobs:
       - name: Restore Packages
         run: |
           cd simple_live_app
-          flutter pub get --verbose 2>&1 | tail -50
+          flutter pub get
       # 设置flutter_distributor环境
       - name: Install flutter_distributor
         run: dart pub global activate flutter_distributor
@@ -179,12 +173,12 @@ jobs:
       - name: Restore Packages
         run: |
           cd simple_live_app
-          flutter pub get --verbose 2>&1 | tail -50
+          flutter pub get
       # 构建Windows应用
       - name: Build Windows
         run: |
           cd simple_live_app
-          flutter build windows --release --verbose 2>&1 | tail -100
+          flutter build windows --release
       # 打包为ZIP
       - name: Package Windows
         run: |
@@ -233,7 +227,6 @@ jobs:
         with:
           distribution: "zulu"
           java-version: "17"
-          cache: "gradle"
 
       # 打开MAC Desktop支持
       - name: Enable Flutter Desktop
@@ -243,7 +236,7 @@ jobs:
       - name: Restore packages
         run: |
           cd simple_live_app
-          flutter pub get --verbose 2>&1 | tail -50
+          flutter pub get
 
       # 安装appdmg npm install -g appdmg
       - name: Install appdmg
