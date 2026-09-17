@@ -26,7 +26,7 @@ jobs:
       - name: Flutter action
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.27.x"
+          flutter-version: "3.38.x"
           cache: true
 
       #更新Flutter的packages
@@ -101,7 +101,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.27.x"
+          flutter-version: "3.38.x"
           cache: true
       # 安装依赖
       - name: Update apt-get
@@ -155,7 +155,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.27.x"
+          flutter-version: "3.38.x"
           cache: true
       # 打开Windows Desktop支持
       - name: Enable Flutter Desktop
@@ -210,7 +210,7 @@ jobs:
       - name: Flutter action
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.27.x"
+          flutter-version: "3.38.x"
           cache: true
 
       #设置JAVA环境
