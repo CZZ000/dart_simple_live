@@ -31,6 +31,7 @@ jobs:
 
       #更新Flutter的packages
       - name: Restore packages
+        timeout-minutes: 8
         run: |
           cd simple_live_app
           flutter pub get
@@ -74,9 +75,10 @@ jobs:
 
       #打包APK
       - name: Build APK
+        timeout-minutes: 12
         run: |
           cd simple_live_app
-          flutter build apk --release --split-per-abi
+          flutter build apk --release --split-per-abi --verbose
 
       #上传APK至Artifacts
       - name: Upload APK to Artifacts
@@ -178,6 +180,7 @@ jobs:
           flutter pub get
       # 构建Windows应用
       - name: Build Windows
+        timeout-minutes: 20
         run: |
           cd simple_live_app
           flutter clean
