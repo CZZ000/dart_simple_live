@@ -29,6 +29,10 @@ jobs:
           flutter-version: "3.38.x"
           cache: true
 
+      #安装Android SDK
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+
       #更新Flutter的packages
       - name: Restore packages
         run: |
