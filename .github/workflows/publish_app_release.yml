@@ -179,6 +179,15 @@ jobs:
         run: |
           cd simple_live_app
           flutter build windows --release
+        continue-on-error: true
+      # 检查构建产物
+      - name: Check build output
+        run: |
+          cd simple_live_app
+          Write-Host "Build directory contents:"
+          Get-ChildItem -Path "build/windows/x64/runner/Release" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName
+          Write-Host "Dist directory contents:"
+          Get-ChildItem -Path "build/dist" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName
       # 打包为ZIP
       - name: Package Windows
         run: |
@@ -186,7 +195,13 @@ jobs:
           $OutputPath = "build\windows\x64\runner\Release"
           $ZipPath = "build\dist\simple_live_app-windows.zip"
           if (!(Test-Path "build\dist")) { New-Item -ItemType Directory -Path "build\dist" -Force }
-          Compress-Archive -Path "$OutputPath\*" -DestinationPath $ZipPath -Force
+          if (Test-Path $OutputPath) {
+            Compress-Archive -Path "$OutputPath\*" -DestinationPath $ZipPath -Force
+            Write-Host "ZIP created successfully"
+          } else {
+            Write-Host "ERROR: Build output not found at $OutputPath"
+            exit 1
+          }
       # 上传Windows至Artifacts
       - name: Upload Windows APP to Artifacts
         uses: actions/upload-artifact@v4
