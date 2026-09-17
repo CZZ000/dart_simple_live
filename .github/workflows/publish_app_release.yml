@@ -26,7 +26,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.3"
+          flutter-version: "3.38.x"
           cache: true
 
       #检查Flutter版本
@@ -81,7 +81,7 @@ jobs:
       - name: Build APK
         run: |
           cd simple_live_app
-          flutter build apk --release --split-per-abi
+          flutter build apk --release --split-per-abi --verbose 2>&1 | tail -100
 
       #上传APK至Artifacts
       - name: Upload APK to Artifacts
@@ -116,7 +116,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.3"
+          flutter-version: "3.38.x"
           cache: true
       # 安装依赖
       - name: Update apt-get
@@ -170,7 +170,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.3"
+          flutter-version: "3.38.x"
           cache: true
       # 打开Windows Desktop支持
       - name: Enable Flutter Desktop
@@ -184,7 +184,7 @@ jobs:
       - name: Build Windows
         run: |
           cd simple_live_app
-          flutter build windows --release
+          flutter build windows --release --verbose 2>&1 | tail -100
       # 打包为ZIP
       - name: Package Windows
         run: |
@@ -225,7 +225,7 @@ jobs:
       - name: Flutter action
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.3"
+          flutter-version: "3.38.x"
           cache: true
 
       #设置JAVA环境
