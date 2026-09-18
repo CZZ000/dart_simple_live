@@ -107,15 +107,26 @@ jobs:
       - name: Echo version
         run: echo "${{ steps.version.outputs.VERSION }}"
 
+      #列出所有APK文件（用于调试）
+      - name: List APK files
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        run: |
+          echo "APK files in build directory:"
+          find simple_live_app/build -name "*.apk" -type f
+          ls -la simple_live_app/build/app/outputs/flutter-apk/
+
       #发布Release
       - name: Publish Android APK to Release
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: simple_live_app/build/app/outputs/flutter-apk/*.apk
-          name: ${{ steps.version.outputs.VERSION }}
-          tag_name: ${{ steps.version.outputs.VERSION }}
-          generate_release_notes: true
+        run: |
+          cd simple_live_app
+          echo "Listing APK files..."
+          ls -la build/app/outputs/flutter-apk/
+          echo "Uploading APK to release..."
+          for apk in build/app/outputs/flutter-apk/*.apk; do
+            echo "Uploading: $apk"
+            gh release upload ${{ steps.version.outputs.VERSION }} "$apk" --clobber
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -176,12 +187,14 @@ jobs:
       #发布Release
       - name: Publish Linux to Release
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: simple_live_app/build/dist/*/*.zip
-          name: ${{ steps.version.outputs.VERSION }}
-          tag_name: ${{ steps.version.outputs.VERSION }}
-          generate_release_notes: true
+        run: |
+          cd simple_live_app
+          echo "Listing zip files..."
+          find build/dist -name "*.zip" -type f
+          for zip in $(find build/dist -name "*.zip" -type f); do
+            echo "Uploading: $zip"
+            gh release upload ${{ steps.version.outputs.VERSION }} "$zip" --clobber
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -282,12 +295,11 @@ jobs:
       #发布Release
       - name: Publish Windows to Release
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: simple_live_app/build/dist/simple_live_app-windows.zip
-          name: ${{ steps.version.outputs.VERSION }}
-          tag_name: ${{ steps.version.outputs.VERSION }}
-          generate_release_notes: true
+        run: |
+          cd simple_live_app
+          echo "Uploading Windows artifact..."
+          ls -la build/dist/simple_live_app-windows.zip
+          gh release upload ${{ steps.version.outputs.VERSION }} build/dist/simple_live_app-windows.zip --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -360,14 +372,17 @@ jobs:
       #发布Release
       - name: Publish Mac to Release
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            simple_live_app/build/dist/*/*.dmg
-            simple_live_app/build/dist/*/*.zip
-          name: ${{ steps.version.outputs.VERSION }}
-          tag_name: ${{ steps.version.outputs.VERSION }}
-          generate_release_notes: true
+        run: |
+          cd simple_live_app
+          echo "Listing macOS artifacts..."
+          find build/dist -name "*.dmg" -o -name "*.zip" | grep -v "\.zip$" || true
+          find build/dist -name "*.dmg" -type f
+          find build/dist -name "*.zip" -type f
+          for f in build/dist/*/*.dmg build/dist/*/*.zip; do
+            [ -f "$f" ] || continue
+            echo "Uploading: $f"
+            gh release upload ${{ steps.version.outputs.VERSION }} "$f" --clobber
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
