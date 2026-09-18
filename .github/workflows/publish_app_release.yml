@@ -107,6 +107,18 @@ jobs:
       - name: Echo version
         run: echo "${{ steps.version.outputs.VERSION }}"
 
+      #发布Release
+      - name: Publish Android APK to Release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: simple_live_app/build/app/outputs/flutter-apk/*.apk
+          name: ${{ steps.version.outputs.VERSION }}
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       #完成
       - run: echo "🤖 Android job's status is ${{ job.status }}."
 
@@ -160,6 +172,18 @@ jobs:
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
       - name: Echo version
         run: echo "${{ steps.version.outputs.VERSION }}"
+
+      #发布Release
+      - name: Publish Linux to Release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: simple_live_app/build/dist/*/*.zip
+          name: ${{ steps.version.outputs.VERSION }}
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       #完成
       - run: echo "🐧 Linux job's status is ${{ job.status }}."
@@ -255,6 +279,18 @@ jobs:
       - name: Echo version
         run: echo "${{ steps.version.outputs.VERSION }}"
 
+      #发布Release
+      - name: Publish Windows to Release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: simple_live_app/build/dist/simple_live_app-windows.zip
+          name: ${{ steps.version.outputs.VERSION }}
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       #完成
       - run: echo "🪟 Windows job's status is ${{ job.status }}."
 
@@ -320,6 +356,20 @@ jobs:
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
       - name: Echo version
         run: echo "${{ steps.version.outputs.VERSION }}"
+
+      #发布Release
+      - name: Publish Mac to Release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            simple_live_app/build/dist/*/*.dmg
+            simple_live_app/build/dist/*/*.zip
+          name: ${{ steps.version.outputs.VERSION }}
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       #完成
       - run: echo "🍏 Mac job's status is ${{ job.status }}."
