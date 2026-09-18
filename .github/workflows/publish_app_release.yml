@@ -110,11 +110,12 @@ jobs:
       #发布Release
       - name: Publish Android APK to Release
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        run: |
-          cd simple_live_app
-          echo "Uploading APK files..."
-          ls -la build/app/outputs/flutter-apk/
-          gh release upload ${{ steps.version.outputs.VERSION }} build/app/outputs/flutter-apk/*.apk --clobber
+        uses: softprops/action-gh-release@v1
+        with:
+          files: simple_live_app/build/app/outputs/flutter-apk/*.apk
+          name: ${{ steps.version.outputs.VERSION }}
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -175,9 +176,12 @@ jobs:
       #发布Release
       - name: Publish Linux to Release
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        run: |
-          cd simple_live_app
-          gh release upload ${{ steps.version.outputs.VERSION }} build/dist/*/*.zip --clobber
+        uses: softprops/action-gh-release@v1
+        with:
+          files: simple_live_app/build/dist/*/*.zip
+          name: ${{ steps.version.outputs.VERSION }}
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -278,9 +282,12 @@ jobs:
       #发布Release
       - name: Publish Windows to Release
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        run: |
-          cd simple_live_app
-          gh release upload ${{ steps.version.outputs.VERSION }} build/dist/simple_live_app-windows.zip --clobber
+        uses: softprops/action-gh-release@v1
+        with:
+          files: simple_live_app/build/dist/simple_live_app-windows.zip
+          name: ${{ steps.version.outputs.VERSION }}
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -353,9 +360,14 @@ jobs:
       #发布Release
       - name: Publish Mac to Release
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        run: |
-          cd simple_live_app
-          gh release upload ${{ steps.version.outputs.VERSION }} build/dist/*/*.dmg build/dist/*/*.zip --clobber
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            simple_live_app/build/dist/*/*.dmg
+            simple_live_app/build/dist/*/*.zip
+          name: ${{ steps.version.outputs.VERSION }}
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
