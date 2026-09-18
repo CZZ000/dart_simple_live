@@ -21,6 +21,7 @@ jobs:
         with:
           distribution: "zulu"
           java-version: "17"
+          cache: "gradle"
 
       #设置Flutter
       - name: Setup Flutter
@@ -34,7 +35,7 @@ jobs:
         timeout-minutes: 10
         run: |
           cd simple_live_app
-          flutter pub get
+          flutter pub get --verbose 2>&1 | tail -30
 
       #接受Android许可证
       - name: Accept Android licenses
@@ -136,7 +137,7 @@ jobs:
       - name: Restore Packages
         run: |
           cd simple_live_app
-          flutter pub get
+          flutter pub get --verbose 2>&1 | tail -30
       # 设置flutter_distributor环境
       - name: Install flutter_distributor
         run: dart pub global activate flutter_distributor
@@ -186,7 +187,7 @@ jobs:
       - name: Restore Packages
         run: |
           cd simple_live_app
-          flutter pub get
+          flutter pub get --verbose 2>&1 | tail -30
       # 构建Windows应用
       - name: Build Windows
         timeout-minutes: 25
