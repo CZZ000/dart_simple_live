@@ -7,7 +7,7 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-22.04
-    timeout-minutes: 20
+    timeout-minutes: 25
     permissions:
       contents: write
     steps:
@@ -26,15 +26,21 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.38.x"
+          flutter-version: "3.27.x"
           cache: true
 
       #更新Flutter的packages
       - name: Restore packages
-        timeout-minutes: 8
+        timeout-minutes: 10
         run: |
           cd simple_live_app
           flutter pub get
+
+      #接受Android许可证
+      - name: Accept Android licenses
+        timeout-minutes: 5
+        run: |
+          yes | flutter doctor --android-licenses 2>/dev/null || true
 
       #检查Gradle版本
       - name: Check Gradle
@@ -42,9 +48,11 @@ jobs:
           echo "Gradle wrapper properties:"
           cat simple_live_app/android/gradle/wrapper/gradle-wrapper.properties
           echo ""
-          echo "Flutter Android info:"
-          flutter config --list
-          flutter doctor --android-licenses 2>/dev/null || true
+          echo "Flutter version:"
+          flutter --version
+          echo ""
+          echo "Java version:"
+          java -version
 
       #APK签名设置（可选，如果设置了secrets则使用签名）
       - name: Check Android keystore
@@ -75,20 +83,21 @@ jobs:
 
       #打包APK
       - name: Build APK
-        timeout-minutes: 12
+        timeout-minutes: 15
         run: |
           cd simple_live_app
-          flutter build apk --release --split-per-abi --verbose
+          flutter build apk --release --verbose 2>&1 | tail -100
+          echo ""
+          echo "=== Build Output ==="
+          ls -la build/app/outputs/flutter-apk/ 2>/dev/null || echo "APK output dir not found"
 
       #上传APK至Artifacts
       - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: android
-          path: |
-            simple_live_app/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
-            simple_live_app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-            simple_live_app/build/app/outputs/flutter-apk/app-x86_64-release.apk
+          name: android-apk
+          path: simple_live_app/build/app/outputs/flutter-apk/*.apk
+          retention-days: 30
 
       #获取版本信息
       - name: Get version from tag
@@ -156,7 +165,7 @@ jobs:
 
   build-windows:
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     permissions:
       contents: write
     steps:
@@ -168,7 +177,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.38.x"
+          flutter-version: "3.27.x"
           cache: true
       # 打开Windows Desktop支持
       - name: Enable Flutter Desktop
@@ -180,40 +189,50 @@ jobs:
           flutter pub get
       # 构建Windows应用
       - name: Build Windows
-        timeout-minutes: 20
+        timeout-minutes: 25
+        shell: pwsh
         run: |
           cd simple_live_app
           flutter clean
           flutter pub get
-          flutter build windows --release -v
-      # 检查构建产物
-      - name: Check build output
-        run: |
-          cd simple_live_app
-          Write-Host "Build directory contents:"
-          Get-ChildItem -Path "build/windows/x64/runner/Release" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName
-          Write-Host "Dist directory contents:"
-          Get-ChildItem -Path "build/dist" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName
+          flutter build windows --release
+          Write-Host "=== Build completed ==="
+          Get-ChildItem -Path "build\windows\x64\runner\Release" -Recurse | Select-Object FullName
       # 打包为ZIP
       - name: Package Windows
+        timeout-minutes: 10
+        shell: pwsh
         run: |
           cd simple_live_app
-          $OutputPath = "build\windows\x64\runner\Release"
-          $ZipPath = "build\dist\simple_live_app-windows.zip"
-          if (!(Test-Path "build\dist")) { New-Item -ItemType Directory -Path "build\dist" -Force }
-          if (Test-Path $OutputPath) {
-            Compress-Archive -Path "$OutputPath\*" -DestinationPath $ZipPath -Force
-            Write-Host "ZIP created successfully"
+          $BuildDir = "build\windows\x64\runner\Release"
+          $DistDir = "build\dist"
+          $ZipPath = "$DistDir\simple_live_app-windows.zip"
+          
+          Write-Host "Checking build output..."
+          if (Test-Path $BuildDir) {
+            Write-Host "Build directory exists: $BuildDir"
+            Get-ChildItem $BuildDir | Select-Object Name
           } else {
-            Write-Host "ERROR: Build output not found at $OutputPath"
+            Write-Host "ERROR: Build directory not found: $BuildDir"
             exit 1
           }
+          
+          if (!(Test-Path $DistDir)) { 
+            New-Item -ItemType Directory -Path $DistDir -Force | Out-Null
+          }
+          
+          Write-Host "Creating ZIP archive..."
+          Compress-Archive -Path "$BuildDir\*" -DestinationPath $ZipPath -Force
+          Write-Host "ZIP created: $ZipPath"
+          $zipSize = (Get-Item $ZipPath).Length / 1MB
+          Write-Host "ZIP size: $([math]::Round($zipSize, 2)) MB"
       # 上传Windows至Artifacts
       - name: Upload Windows APP to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows
+          name: windows-app
           path: simple_live_app/build/dist/simple_live_app-windows.zip
+          retention-days: 30
 
       #获取版本信息
       - name: Get version from tag
