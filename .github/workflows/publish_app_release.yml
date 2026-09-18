@@ -84,13 +84,22 @@ jobs:
 
       #打包APK
       - name: Build APK
-        timeout-minutes: 15
+        timeout-minutes: 20
         run: |
           cd simple_live_app
-          flutter build apk --release --verbose 2>&1 | tail -100
+          echo "Starting Flutter build..."
+          flutter build apk --release 2>&1
           echo ""
-          echo "=== Build Output ==="
-          ls -la build/app/outputs/flutter-apk/ 2>/dev/null || echo "APK output dir not found"
+          echo "=== Checking build output ==="
+          if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
+            echo "SUCCESS: app-release.apk found"
+            ls -la build/app/outputs/flutter-apk/
+          else
+            echo "ERROR: APK not found!"
+            ls -la build/app/outputs/flutter-apk/ 2>/dev/null || echo "Directory not found"
+            find build -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
+            exit 1
+          fi
 
       #上传APK至Artifacts
       - name: Upload APK to Artifacts
