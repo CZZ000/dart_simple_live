@@ -9,11 +9,13 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -22,11 +24,15 @@ jobs:
           channel: 'stable'
           cache: true
       
-      - name: Get dependencies
+      - name: Get simple_live_core dependencies first
+        run: |
+          cd simple_live_core
+          dart pub get
+      
+      - name: Get app dependencies
         run: |
           cd simple_live_app
           flutter pub get
-          flutter pub deps
       
       - name: Build APK
         run: |
