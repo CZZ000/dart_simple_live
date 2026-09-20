@@ -117,7 +117,7 @@ jobs:
       - name: Build APK
         run: |
           cd simple_live_app
-          flutter build apk --release --split-per-abi
+          flutter build apk --release
           echo "=== APK output ==="
           ls -la build/app/outputs/flutter-apk/
       - name: Upload APK to Artifacts
