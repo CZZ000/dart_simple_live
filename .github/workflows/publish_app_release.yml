@@ -5,8 +5,8 @@ on:
       - "v*"
 
 jobs:
-  # ── Android (ubuntu 22.04, with native toolchain for dart_quickjs) ──
-  build-android:
+  # ── Linux (ubuntu 22.04 — proven to work) ─────────────────────────
+  build-linux:
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -14,53 +14,82 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Install system deps (native toolchain for dart_quickjs)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config \
-            libgtk-3-dev liblzma-dev libasound2-dev libmpv-dev mpv
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.38.x"
           cache: true
-      - uses: actions/setup-java@v4
-        with:
-          distribution: "zulu"
-          java-version: "17"
-          cache: "gradle"
-      - name: Restore packages
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev libasound2-dev libmpv-dev mpv
+      - name: Enable Flutter Desktop
+        run: flutter config --enable-linux-desktop
+      - name: Get packages
+        run: cd simple_live_app && flutter pub get
+      - name: Install flutter_distributor
+        run: dart pub global activate flutter_distributor
+      - name: Build Linux
         run: |
           cd simple_live_app
-          flutter pub get
-      - name: Build APK
-        run: |
-          cd simple_live_app
-          flutter build apk --release --split-per-abi
-      - name: Upload APK to Artifacts
+          flutter_distributor package --platform linux --targets deb,zip --skip-clean
+          ls -la build/dist/
+      - name: Upload Linux to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: android
-          path: |
-            simple_live_app/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
-            simple_live_app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-            simple_live_app/build/app/outputs/flutter-apk/app-x86_64-release.apk
-      - name: Get version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-      - name: Upload Release
-        if: github.event_name == 'push'
+          name: linux
+          path: simple_live_app/build/dist/**/*.deb
+      - name: Upload to Release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
-          name: "${{ steps.version.outputs.VERSION }}"
           generate_release_notes: true
-          token: ${{ secrets.TOKEN }}
           files: |
-            simple_live_app/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
-            simple_live_app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-            simple_live_app/build/app/outputs/flutter-apk/app-x86_64-release.apk
+            simple_live_app/build/dist/**/*.deb
+            simple_live_app/build/dist/**/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ── Linux (portable flatpak-free package) ───────────────────────────
-  build-linux:
+  # ── Windows (windows-latest) ────────────────────────────────────────
+  build-windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.x"
+          cache: true
+      - name: Enable Flutter Desktop
+        run: flutter config --enable-windows-desktop
+      - name: Get packages
+        run: cd simple_live_app && flutter pub get
+      - name: Install flutter_distributor
+        run: dart pub global activate flutter_distributor
+      - name: Build Windows
+        run: |
+          cd simple_live_app
+          flutter_distributor package --platform windows --targets zip --skip-clean
+          ls build/dist/
+      - name: Upload Windows to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: simple_live_app/build/dist/**/*.zip
+      - name: Upload to Release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          files: simple_live_app/build/dist/**/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── Android (ubuntu 22.04, native compile) ─────────────────────────
+  build-android:
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -77,77 +106,30 @@ jobs:
         with:
           flutter-version: "3.38.x"
           cache: true
-      - name: Enable Linux Desktop
-        run: flutter config --enable-linux-desktop
-      - name: Restore Packages
+      - uses: actions/setup-java@v5
+        with:
+          distribution: "zulu"
+          java-version: "17"
+          cache: "gradle"
+      - name: Accept Android licenses
+        run: yes | flutter doctor --android-licenses
+      - name: Get packages
+        run: cd simple_live_app && flutter pub get
+      - name: Build APK
         run: |
           cd simple_live_app
-          flutter pub get
-      - name: Install flutter_distributor
-        run: dart pub global activate flutter_distributor
-      - name: Build Linux
-        run: |
-          cd simple_live_app
-          flutter_distributor package --platform linux --targets deb,zip --skip-clean
-      - name: Upload Linux to Artifacts
+          flutter build apk --release --split-per-abi
+          ls -la build/app/outputs/flutter-apk/
+      - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux
-          path: simple_live_app/build/dist/**/*.deb
-      - name: Get version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-      - name: Upload Release
-        if: github.event_name == 'push'
+          name: android
+          path: simple_live_app/build/app/outputs/flutter-apk/*.apk
+      - name: Upload to Release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
-          name: "${{ steps.version.outputs.VERSION }}"
           generate_release_notes: true
-          token: ${{ secrets.TOKEN }}
-          files: |
-            simple_live_app/build/dist/**/*.deb
-            simple_live_app/build/dist/**/*.zip
-
-  # ── Windows (via flutter_distributor) ───────────────────────────────
-  build-windows:
-    runs-on: windows-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.38.x"
-          cache: true
-      - name: Enable Flutter Desktop
-        run: flutter config --enable-windows-desktop
-      - name: Restore packages
-        run: |
-          cd simple_live_app
-          flutter pub get
-      - name: Install flutter_distributor
-        run: dart pub global activate flutter_distributor
-      - name: Build Windows
-        run: |
-          cd simple_live_app
-          flutter_distributor package --platform windows --targets msix,zip --skip-clean
-      - name: Upload Windows to Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows
-          path: simple_live_app/build/dist/**/*.msix
-      - name: Get version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-      - name: Upload Release
-        if: github.event_name == 'push'
-        uses: softprops/action-gh-release@v1
-        with:
-          name: "${{ steps.version.outputs.VERSION }}"
-          generate_release_notes: true
-          token: ${{ secrets.TOKEN }}
-          files: |
-            simple_live_app/build/dist/**/*.msix
-            simple_live_app/build/dist/**/*.zip
+          files: simple_live_app/build/app/outputs/flutter-apk/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
