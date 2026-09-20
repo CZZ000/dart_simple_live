@@ -33,7 +33,6 @@ jobs:
         run: |
           cd simple_live_app
           flutter_distributor package --platform linux --targets deb,zip --skip-clean
-          ls -la build/dist/
       - name: Upload Linux to Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -50,7 +49,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ── Windows (windows-latest) ────────────────────────────────────────
+  # ── Windows (windows-latest, zip only — avoids MSIX tools) ─────────
   build-windows:
     runs-on: windows-latest
     permissions:
@@ -73,7 +72,7 @@ jobs:
         run: |
           cd simple_live_app
           flutter_distributor package --platform windows --targets zip --skip-clean
-          ls build/dist/
+          Get-ChildItem -Path build/dist -Recurse | Select-Object FullName, Length
       - name: Upload Windows to Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -88,7 +87,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ── Android (ubuntu 22.04, native compile) ─────────────────────────
+  # ── Android (ubuntu 22.04) ─────────────────────────────────────────
   build-android:
     runs-on: ubuntu-22.04
     permissions:
